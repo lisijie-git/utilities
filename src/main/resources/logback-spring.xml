@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration scan="true" scanPeriod="60 seconds" debug="false">
+<!-- spring boot 的logback日志配置文件 -->
+	<!-- 开发环境日志文件基础路径 -->
+	<springProfile name="dev">
+		<property name="BASE_PATH" value="C:/Users/ASUS/Desktop/base/log"/>
+	</springProfile>
+	<!-- 生产环境日志文件基础路径 -->
+	<springProfile name="prd">
+		<property name="BASE_PATH" value="C:/Users/ASUS/Desktop/base/log"/>
+	</springProfile>
+	<!-- 
+		格式化输出样式。
+		%d日期，%thread线程名，%-5level级别从左显示5个字符宽度，%logger名字最长50个字符否则按照句点分割，%msg日志消息，%n换行符
+	 -->
+	<property name="PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS}-%thread-%-5level-%logger{50}-%msg%n"/>
+	
+	<!-- 控制台输出的appender -->
+	<appender name="console" class="ch.qos.logback.core.ConsoleAppender">
+		<!-- 设置输出格式 -->
+		<encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+			<pattern>${PATTERN}</pattern>
+			<charset>UTF-8</charset>
+		</encoder>
+	</appender>
+	
+	<!-- 滚动记录文件的appender。将日志记录到指定文件，当满足某种条件时，将日志记录到其他文件。这里只记录error级别日志 -->
+	<appender name="error-file" class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<!-- 
+			日志文件名称，如果没有file元素，那么只会使用FileNamePattern的文件路径规则。
+			如果同时都有，当前最新生成的文件会使用file规则名称，发生滚动的文件会从file名称改变为FileNamePattern的文件规则名称。
+			这个属性暂时用处不大，学习用。
+		 -->
+		<file>${BASE_PATH}/error/new.log</file>
+		
+		<!-- 阀值过滤器，打印error级别以及更高级别的日志。 -->
+		<filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+			<level>ERROR</level>
+		</filter>
+		
+		<!-- 
+			滚动策略，按照文件大小和时间来生成和移动文件。
+			一般是设置为ch.qos.logback.core.rolling.TimeBasedRollingPolicy基于时间的滚动策略，
+			在这种策略内添加timeBasedFileNamingAndTriggeringPolicy标签添加文件大小触发策略，麻烦了一些。
+			所以直接设置ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy策略，进行配置，思路比较清晰。
+		 -->
+		<rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+			<!-- 
+				日志文件名模板。
+				文件按时间%d{yyyy-MM-dd}分割滚动命名，按照文件大小上限分割滚动，并按%i滚动命名。
+				可设置文件类型，开启压缩文件，这里设置成zip。
+			 -->
+			<FileNamePattern>${BASE_PATH}/error/%d{yyyy-MM-dd}-%i.log.zip</FileNamePattern>
+			<!-- 日志保留时间，30天，目前不用设置代表永久保留 -->
+			<!-- <MaxHistory>30</MaxHistory> -->
+			<!-- 日志文件大小上线 -->
+			<MaxFileSize>10MB</MaxFileSize>
+		</rollingPolicy>
+		
+		<!-- 设置输出格式 -->
+		<encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+			<pattern>${PATTERN}</pattern>
+			<charset>UTF-8</charset>
+		</encoder>
+	</appender>
+	
+	<!-- 滚动记录info级别日志文件的appender -->
+	<appender name="info-file" class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<file>${BASE_PATH}/info/new.log</file>
+		
+		<!-- 
+			级别过滤器。只打印info级别日志
+			onMatch匹配标签，onMismatch不匹配标签。
+			ACCEPT值同意当前打印，DENY值拒绝当前打印，NEUTRAL中立传给下一个过滤，如果没有其他过滤，就答应同意打印。
+		 -->
+		<filter class="ch.qos.logback.classic.filter.LevelFilter">
+			<level>INFO</level>
+			<onMatch>ACCEPT</onMatch>
+			<onMismatch>DENY</onMismatch>
+		</filter>
+		
+		<rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+			<FileNamePattern>${BASE_PATH}/info/%d{yyyy-MM-dd}-%i.log.zip</FileNamePattern>
+			<!-- <MaxHistory>30</MaxHistory> -->
+			<MaxFileSize>10MB</MaxFileSize>
+		</rollingPolicy>
+		
+		<encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+			<pattern>${PATTERN}</pattern>
+			<charset>UTF-8</charset>
+			<!-- 设置为false，就会缓存输出，会带来一些性能提升，但有丢失日志未从内存缓存打印到硬盘的风险，如关闭程序就有可能 -->
+			<!-- <immediateFlush>false</immediateFlush> -->
+		</encoder>
+	</appender>
+	
+	<!-- 
+		根记录器。root的name已经被设置为root了，没有name属性
+		如果只存在root记录器，就执行root记录。
+		如果同时存在logger记录器，不会单独执行root，只会执行logger。logger设置了additivity=true向root传递才会叠加执行root。
+	 -->
+	<root level="INFO">
+		<appender-ref ref="console"/>
+	</root>
+	
+	<!-- 多环境设置。开发环境才需要控制台打印 -->
+	<springProfile name="dev">
+		<!-- 
+			记录器。
+			name指定此logger打印日志约束范围的包名或类全名，name设置为root就是全部(项目根路径)，
+			level指定日志级别下限，
+			additivity指定是否传递到root记录器。
+			如果additivity=true，无论在logger中匹配的还是不匹配的日志，每条记录都再次会传到root中，再次选择匹配的打印日志。
+		 -->
+		<logger name="com.lisijietech" level="INFO" additivity="true">
+			<appender-ref ref="error-file"/>
+			<appender-ref ref="info-file"/>
+		</logger>
+	</springProfile>
+	<springProfile name="prd">
+		<logger name="root" level="INFO" additivity="false">
+			<appender-ref ref="error-file"/>
+			<appender-ref ref="info-file"/>
+		</logger>
+	</springProfile>
+</configuration>
