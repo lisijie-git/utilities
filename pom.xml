@@ -18,6 +18,8 @@
 		<poiooxml.version>4.1.2</poiooxml.version>
 		<zxing-core.version>3.3.3</zxing-core.version>
 		<zxing-javase.version>3.3.3</zxing-javase.version>
+		<javax-mail.version>1.6.2</javax-mail.version>
+		<javax-activation.version>1.2.0</javax-activation.version>
 	</properties>
 
 	<dependencies>
@@ -69,6 +71,19 @@
 			<groupId>com.google.zxing</groupId>
 			<artifactId>javase</artifactId>
 			<version>${zxing-javase.version}</version>
+		</dependency>
+		
+		<!-- sun开发的java邮件组件 -->
+		<dependency>
+			<groupId>com.sun.mail</groupId>
+			<artifactId>javax.mail</artifactId>
+			<version>${javax-mail.version}</version>
+		</dependency>
+		<!-- JAF，用来处理数据的MIME类型数据。主要用来处理mail邮件的MIME，如附件等 -->
+		<dependency>
+			<groupId>com.sun.activation</groupId>
+			<artifactId>javax.activation</artifactId>
+			<version>${javax-activation.version}</version>
 		</dependency>
 	</dependencies>
 
